@@ -19,9 +19,9 @@ public class App extends Application {
     @Override
     public void start(Stage stage) throws IOException {
         scene = new Scene(loadFXML("primary"), 640, 480);
+        stage.setTitle("Loja Nath");
+        stage.getIcons().add(new Image(getClass().getResourceAsStream("icon.png")));
         stage.setScene(scene);
-        stage.setTitle("Lojinha");
-        stage.getIcons().add(new Image(getClass().getResourceAsStream("icone.png")));
         stage.show();
     }
 

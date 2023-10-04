@@ -5,68 +5,66 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.example.model.Pedido;
 import com.example.model.Produto;
 
 public class ProdutoDao {
 
-    final String URL = "jdbc:oracle:thin:@oracle.fiap.com.br:1521:ORCL";
-    final String USER = "rm552496";
-    final String PASS = "240103";
+    static final String URL = "jdbc:oracle:thin:@oracle.fiap.com.br:1521:ORCL";
+    static final String USER = "rm97861";
+    static final String PASS = "180303";
 
-    public void inserir(Produto produto) throws SQLException{
-
+    public static void inserir(Produto produto) throws SQLException {
         var conexao = DriverManager.getConnection(URL, USER, PASS);
 
-        var sql = "INSERT INTO T_LJ_PRODUTO (ID_PRODUTO, NM_PRODUTO, DS_PRODUTO, PRECO_PRODUTO) VALUES (?, ?, ?, ?) ";
+        var sql = "INSERT INTO produtos (id, descricao, valor, id_pedido) VALUES (seq_pedidos.nextVal, ?, ?, ?) ";
         var comando = conexao.prepareStatement(sql);
-        comando.setInt(1, produto.getId());
-        comando.setString(2, produto.getNome());
-        comando.setString(3, produto.getDescricao());
-        comando.setDouble(4, produto.getPreco());
+        comando.setString(1,produto.getDescricao());
+        comando.setBigDecimal(2, produto.getValor());
+        comando.setLong(3, produto.getPedido().getId());
         comando.executeUpdate();
 
         conexao.close();
-        
+
     }
 
-    public List<Produto> listarTodos() throws SQLException{
-        var conexao = DriverManager.getConnection(URL, USER, PASS);
-        var comando = conexao.prepareStatement("SELECT * FROM T_LJ_PRODUTO");
-        var resultado = comando.executeQuery();
-
+    public static List<Produto> buscarTodos() throws SQLException{
         var lista = new ArrayList<Produto>();
 
+        var conexao = DriverManager.getConnection(URL, USER, PASS);
+        var comando = conexao.prepareStatement("SELECT produtos.*, pedidos.id FROM produtos INNER JOIN pedidos ON produtos.id_pedido=pedidos.id");
+        var resultado = comando.executeQuery();
+
         while(resultado.next()){
-            lista.add (
-                new Produto(
-                    resultado.getInt("ID_PRODUTO"), 
-                    resultado.getString("NM_PRODUTO"), 
-                    resultado.getString("DS_PRODUTO"), 
-                    resultado.getDouble("PRECO_PRODUTO")
-                 )
-            );
+            lista.add (new Produto(
+                resultado.getLong("id"), 
+                resultado.getString("descricao"), 
+                resultado.getBigDecimal("valor"),
+                new Pedido(
+                    resultado.getLong("id_pedido")
+                )
+            ));
         }
 
         conexao.close();
         return lista;
     }
 
-    public void apagar(Produto produto) throws SQLException{
+    public static void apagar(Long id) throws SQLException{
         var conexao = DriverManager.getConnection(URL, USER, PASS);
-        var comando = conexao.prepareStatement("DELETE FROM T_LJ_PRODUTO WHERE ID_PRODUTO=?");
-        comando.setLong(1, produto.getId());
+        var comando = conexao.prepareStatement("DELETE FROM produtos WHERE id=?");
+        comando.setLong(1, id);
         comando.executeUpdate();
         conexao.close();
     }
 
-    public void atualizar(Produto produto) throws SQLException{
+    public static void atualizar(Produto produto) throws SQLException{
         var conexao = DriverManager.getConnection(URL, USER, PASS);
-        var comando = conexao.prepareStatement("UPDATE T_LJ_PRODUTO SET NM_PRODUTO=?, DS_PRODUTO=?, PRECO_PRODUTO=? WHERE ID_PRODUTO=?");
-        comando.setString(1, produto.getNome());
-        comando.setString(2, produto.getDescricao());
-        comando.setDouble(3, produto.getPreco());
+        var comando = conexao.prepareStatement("UPDATE produtos SET descricao=?, valor=? WHERE id=?");
+        comando.setString(1, produto.getDescricao());
+        comando.setBigDecimal(2, produto.getValor());
+        comando.setLong(3, produto.getId());
         comando.executeUpdate();
         conexao.close();
     }
-    
 }
